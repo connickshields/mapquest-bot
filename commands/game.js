@@ -1,17 +1,19 @@
-const { SlashCommandBuilder } = require('@discordjs/builders');
+import { SlashCommandBuilder } from 'discord.js';
 
-module.exports = {
+const command = {
   data: new SlashCommandBuilder()
-    .setName('start-game')
+    .setName('game')
     .setDescription('Sends initial clues and sets up the leaderboard.'),
   async execute(interaction) {
     // load the initial photos / send them
+    return await interaction.reply({
+      content: `Loading location information into the DB.`,
+      ephemeral: true,
+    });
     // create a leaderboard with teams
     // send leaderboard to channel
     // set up filesystem to track
-    await interaction.reply({
-      content: `Sending initial clues and setting up the leaderboard!`,
-      ephemeral: true,
-    });
   },
 };
+
+export default command;

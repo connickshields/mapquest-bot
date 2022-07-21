@@ -1,18 +1,20 @@
 {
   "name": "mapquest_bot",
   "version": "1.0.0",
+  "type": "module",
   "description": "a discord bot which helps administrate mapquest game sessions",
-  "main": "index.js",
+  "exports": "./index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "connick",
   "license": "MIT",
   "dependencies": {
-    "@discordjs/builders": "^1.0.0",
     "@discordjs/rest": "^1.0.0",
     "discord-api-types": "^0.36.2",
-    "discord.js": "^14.0.2"
+    "discord.js": "^14.0.2",
+    "lodash-es": "^4.17.21",
+    "lowdb": "^3.0.0"
   },
   "devDependencies": {
     "eslint": "^8.20.0",
