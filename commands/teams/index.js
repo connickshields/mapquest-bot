@@ -69,7 +69,7 @@ const command = {
         )
     ),
   async execute(interaction) {
-    const db = await openDB('teams');
+    const db = await openDB('teams', []);
     if (interaction.options.getSubcommand() === 'create') {
       return await create(interaction, db);
     }

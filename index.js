@@ -1,8 +1,9 @@
 import { Client, GatewayIntentBits, Collection } from 'discord.js';
 import { InteractionType } from 'discord-api-types/v10';
 import config from './config.js';
+import deploy from './deploy-commands.js';
 
-import game from './commands/game.js';
+import game from './commands/game/index.js';
 import teams from './commands/teams/index.js';
 const commands = [game, teams];
 
@@ -14,7 +15,8 @@ commands.forEach(async (command) => {
   client.commands.set(command.data.name, command);
 });
 
-client.once('ready', () => {
+client.once('ready', async () => {
+  await deploy(config, commands);
   console.log('Ready!');
 });
 
@@ -29,10 +31,10 @@ client.on('interactionCreate', async (interaction) => {
     await command.execute(interaction);
   } catch (error) {
     console.error(error);
-    await interaction.reply({
-      content: 'There was an error while executing this command!',
-      ephemeral: true,
-    });
+    // await interaction.reply({
+    //   content: 'There was an error while executing this command!',
+    //   ephemeral: true,
+    // });
   }
 });
 

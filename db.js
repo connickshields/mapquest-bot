@@ -4,13 +4,13 @@ import { Low, JSONFile } from 'lowdb';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-export default async function openDB(name) {
+export default async function openDB(name, defaultValue) {
   // Use JSON file for storage
-  const file = join(__dirname, `${name}.json`);
+  const file = join(__dirname, `/content/${name}.json`);
   const adapter = new JSONFile(file);
   const db = new Low(adapter);
   // Read data from JSON file, this will set db.data content
   await db.read();
-  db.data = db.data || { [name]: [] };
+  db.data = db.data || { [name]: defaultValue };
   return db;
 }
