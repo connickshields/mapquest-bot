@@ -1,4 +1,4 @@
-// import * as _ from 'lodash-es';
+import * as _ from 'lodash-es';
 
 import { readdir } from 'node:fs/promises';
 
@@ -49,12 +49,13 @@ export default async function handler(interaction, gameState, locations) {
     }
     // make sure that the folder actually exists on disk
     try {
-      const photos = await readdir(
+      const dirFiles = await readdir(
         join(
           __dirname,
           '../../content/locations/' + locations.data[index].foldername + '/'
         )
       );
+      const photos = _.filter(dirFiles);
       console.log(photos);
     } catch (error) {
       if (error.message.includes('no such file or directory')) {
