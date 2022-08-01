@@ -1,5 +1,7 @@
 import * as _ from 'lodash-es';
 
+import sendClues from '../../send-clues.js';
+
 import { readdir } from 'node:fs/promises';
 
 import { join, dirname } from 'path';
@@ -24,7 +26,7 @@ export default async function handler(interaction, gameState, locations) {
   });
 
   const problemMessages = [];
-  //const validPhotoFileNames = ['1.jpeg', '2.jpeg', '3.jpeg', '4.jpeg'];
+  const validPhotoFileNames = ['1.jpeg', '2.jpeg', '3.jpeg', '4.jpeg'];
   // make sure that folders for each location actually exist
   // and that each contains properly named photos up to 4
   for (const index in locations.data) {
@@ -55,8 +57,27 @@ export default async function handler(interaction, gameState, locations) {
           '../../content/locations/' + locations.data[index].foldername + '/'
         )
       );
-      const photos = _.filter(dirFiles);
-      console.log(photos);
+      const photos = _.filter(dirFiles, (file) => file.includes('.jpeg'));
+      // make sure that there is at least 1 photo
+      if (photos.length === 0) {
+        problemMessages.push(
+          `⚠️ \`${locations.data[index].locationname}\` has no photos!`
+        );
+        continue;
+      }
+      // make sure that there are a max of 4 photos
+      if (photos.length > 4) {
+        problemMessages.push(
+          `⚠️ \`${locations.data[index].locationname}\` has more than 4 photos!`
+        );
+        continue;
+      }
+      if (!_.isEqual(photos, validPhotoFileNames.slice(0, photos.length))) {
+        problemMessages.push(
+          `⚠️ \`${locations.data[index].locationname}\` has photo naming problems!`
+        );
+        continue;
+      }
     } catch (error) {
       if (error.message.includes('no such file or directory')) {
         problemMessages.push(
@@ -78,14 +99,17 @@ export default async function handler(interaction, gameState, locations) {
   }
 
   await interaction.editReply({
-    content: 'Validating location list file... ✅',
+    content: 'Validating location list file... ✅\nSending photo clues...',
     ephemeral: false,
   });
 
-  //   db.data.game.locationToThreadMap[location] = {
-  //     number: indexMap[i],
-  //     // TODO record thread ID too
-  //     thread: 'todo',
-  //   };
+  await sendClues(interaction.client, locations, 1);
+
+  await interaction.editReply({
+    content: 'Validating location list file... ✅\nSending photo clues... ✅',
+    ephemeral: false,
+  });
+
+  gameState.data.cluesSent = 1;
   await gameState.write();
 }
