@@ -3,11 +3,19 @@ import { InteractionType } from 'discord-api-types/v10';
 import config from './config.js';
 import deploy from './deploy-commands.js';
 
+import handleMessageEvent from './handle-events.js';
+
 import game from './commands/game/index.js';
 import teams from './commands/teams/index.js';
 const commands = [game, teams];
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+  ],
+});
 
 client.commands = new Collection();
 
@@ -31,11 +39,23 @@ client.on('interactionCreate', async (interaction) => {
     await command.execute(interaction);
   } catch (error) {
     console.error(error);
-    // await interaction.reply({
-    //   content: 'There was an error while executing this command!',
-    //   ephemeral: true,
-    // });
   }
+});
+
+client.on('messageCreate', async (message) => {
+  if (
+    // #captures
+    message.channelId === '985693820454838272' &&
+    message.content.toLowerCase().includes('location')
+  ) {
+    await handleMessageEvent(message);
+  }
+});
+
+client.on('rateLimit', async (rli) => {
+  console.log('rate limit?');
+  console.log(rli.timeout);
+  console.log(rli.limit);
 });
 
 client.login(config.token);
