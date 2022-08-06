@@ -1,14 +1,14 @@
 import * as _ from 'lodash-es';
 
 export default async function handler(interaction, db) {
-  if (db.data.teams.length === 0) {
+  if (db.data.length === 0) {
     return await interaction.reply({
       content: 'No teams yet!',
       ephemeral: false,
     });
   } else {
     let returnString = '';
-    db.data.teams.forEach((team) => {
+    db.data.forEach((team) => {
       returnString += `**Team Name**: \`${team.name}\` - **Captain**: ${
         team.captain ? `<@${team.captain}>` : 'Not selected'
       }\n*Members*: ${

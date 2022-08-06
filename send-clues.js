@@ -3,7 +3,6 @@ import * as P from 'blend-promise-utils';
 
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-// import { Low, JSONFile } from 'lowdb';
 
 import { readdir } from 'node:fs/promises';
 
@@ -16,54 +15,74 @@ function sleep(ms) {
 }
 
 export default async function sendClues(client, locations, clueNum) {
-  const messages = await P.mapLimit(locations.data, 20, async function (location, index) {
-    const channel = client.channels.cache.get(
-      // the thread or #clues
-      locations.data[index].channelId || '1005172287630221330'
-    );
-    const dirFiles = await readdir(
-      join(__dirname, './content/locations/' + locations.data[index].foldername + '/')
-    );
-    const photos = _.filter(dirFiles, (file) => file.includes('.jpeg'));
-    if (!photos.includes(`${clueNum}.jpeg`)) {
-      return;
-    }
-    const message = await channel.send({
-      files: [
-        join(
-          __dirname,
-          './content/locations/' + locations.data[index].foldername + `/${clueNum}.jpeg`
-        ),
-      ],
-    });
-    locations.data[index].messageId = message.id;
-    locations.data[index].captured = false;
-    return { id: message.id, locationIndex: index, numberOfClues: photos.length };
-  });
-
-  await locations.write();
-
-  // if this is the first clue, create the threads
   if (clueNum === 1) {
-    await P.mapLimit(messages, 5, async function (message) {
-      const thread = await message.startThread({
-        name: `Location ${parseInt(message.index) + 1} - ${
-          locations.data[message.index].pointvalue
-        } points - ${message.numberOfClues} clues`,
+    // use .mapSeries to preserve order
+    await P.mapSeries(locations.data, async function (location, index) {
+      const clues = await client.channels.fetch(
+        // #clues
+        '1005250001724780595'
+      );
+      const dirFiles = await readdir(
+        join(__dirname, './content/locations/' + location.foldername + '/')
+      );
+      const photos = _.filter(dirFiles, (file) => file.includes('.jpeg'));
+      if (!photos.includes(`${clueNum}.jpeg`)) {
+        return;
+      }
+      const message = await clues.send({
+        files: [
+          join(
+            __dirname,
+            './content/locations/' + location.foldername + `/${clueNum}.jpeg`
+          ),
+        ],
       });
-      locations.data[message.index].channelId = thread.id;
+      locations.data[index].messageId = message.id;
+      locations.data[index].captured = false;
+
+      const thread = await message.startThread({
+        name: `Location ${parseInt(index) + 1} - ${location.pointvalue} points - ${
+          photos.length
+        } clues`,
+      });
+      locations.data[index].channelId = thread.id;
       // avoid thread creation rate limit
-      await sleep(5000);
+      return await sleep(5000);
     });
+    await locations.write();
   } else {
-    // if this is not the first clue, send an update message
-    const channel = client.channels.cache.get(
+    // order is already set so go faaaast
+    await P.map(locations.data, async function (location) {
+      // don't send additional clues for captured locations
+      if (location.captured) {
+        return;
+      }
+      const thread = await client.channels.fetch(
+        // the thread
+        location.channelId
+      );
+      const dirFiles = await readdir(
+        join(__dirname, './content/locations/' + location.foldername + '/')
+      );
+      const photos = _.filter(dirFiles, (file) => file.includes('.jpeg'));
+      if (!photos.includes(`${clueNum}.jpeg`)) {
+        return;
+      }
+      return await thread.send({
+        files: [
+          join(
+            __dirname,
+            './content/locations/' + location.foldername + `/${clueNum}.jpeg`
+          ),
+        ],
+      });
+    });
+    const clues = await client.channels.fetch(
       // #clues
-      '1005172287630221330'
+      '1005250001724780595'
     );
-    await channel.send({
+    await clues.send({
       content: `@everyone Clue batch #${clueNum} has been sent!`,
     });
   }
-  await locations.write();
 }

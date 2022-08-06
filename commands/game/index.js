@@ -3,8 +3,8 @@ import { SlashCommandBuilder } from 'discord.js';
 import openDB from '../../db.js';
 
 import start from './start.js';
+import end from './end.js';
 import sendMoreClues from './send-more-clues.js';
-// import end from './end.js';
 
 const command = {
   data: new SlashCommandBuilder()
@@ -19,10 +19,10 @@ const command = {
       subcommand
         .setName('send-more-clues')
         .setDescription('Sends the next batch of clues.')
+    )
+    .addSubcommand((subcommand) =>
+      subcommand.setName('end').setDescription('Ends the game. Calculates winner too!')
     ),
-  // .addSubcommand((subcommand) =>
-  //   subcommand.setName('end').setDescription('Ends the game. Calculates winner too!')
-  // ),
   async execute(interaction) {
     const gameStateDb = await openDB('game', {});
     const locationsDb = await openDB('locations', []);
@@ -32,9 +32,9 @@ const command = {
     if (interaction.options.getSubcommand() === 'send-more-clues') {
       return await sendMoreClues(interaction, gameStateDb, locationsDb);
     }
-    // if (interaction.options.getSubcommand() === 'end') {
-    //   return await end(interaction, db);
-    // }
+    if (interaction.options.getSubcommand() === 'end') {
+      return await end(interaction, gameStateDb);
+    }
   },
 };
 

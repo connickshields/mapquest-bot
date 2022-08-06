@@ -3,7 +3,7 @@ import { InteractionType } from 'discord-api-types/v10';
 import config from './config.js';
 import deploy from './deploy-commands.js';
 
-import handleMessageEvent from './handle-events.js';
+import { handleMessageEvent, handleButtonEvent } from './handle-events.js';
 
 import game from './commands/game/index.js';
 import teams from './commands/teams/index.js';
@@ -29,17 +29,25 @@ client.once('ready', async () => {
 });
 
 client.on('interactionCreate', async (interaction) => {
-  if (interaction.type !== InteractionType.ApplicationCommand) return;
-
+  if (interaction.type !== InteractionType.ApplicationCommand) {
+    return;
+  }
   const command = client.commands.get(interaction.commandName);
-
-  if (!command) return;
-
+  if (!command) {
+    return;
+  }
   try {
     await command.execute(interaction);
   } catch (error) {
     console.error(error);
   }
+});
+
+client.on('interactionCreate', async (interaction) => {
+  if (interaction.type !== InteractionType.MessageComponent) {
+    return;
+  }
+  await handleButtonEvent(interaction);
 });
 
 client.on('messageCreate', async (message) => {
@@ -50,12 +58,6 @@ client.on('messageCreate', async (message) => {
   ) {
     await handleMessageEvent(message);
   }
-});
-
-client.on('rateLimit', async (rli) => {
-  console.log('rate limit?');
-  console.log(rli.timeout);
-  console.log(rli.limit);
 });
 
 client.login(config.token);
